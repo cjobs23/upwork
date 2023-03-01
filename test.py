@@ -9,13 +9,9 @@ password = "your_password"
 # Replace with the path to your Chrome driver executable
 chromedriver_path = "path/to/chromedriver"
 
-# List of profile URLs to check
-profile_urls = [
-    "https://www.instagram.com/profile1/",
-    "https://www.instagram.com/profile2/",
-    "https://www.instagram.com/profile3/",
-    # Add more profile URLs as necessary
-]
+# Read profile URLs from text file
+with open("profiles.txt", "r") as f:
+    profile_urls = f.read().splitlines()
 
 # Open Chrome browser and log in to Instagram
 driver = webdriver.Chrome(chromedriver_path)
@@ -41,5 +37,4 @@ for profile_url in profile_urls:
 
 # Close the browser
 driver.quit()
-
-##This script uses the Selenium library to automate the process of logging in to Instagram, navigating to each profile's following list, and checking if your profile is in the list. It also includes a time.sleep() function to slow down the script's execution and avoid being detected as a bot.
+##In this version, the script reads profile URLs from a text file named "profiles.txt" and uses the splitlines() method to convert the file contents into a list of strings, with each string representing a profile URL. You can modify the text file as necessary to add or remove profile URLs.
