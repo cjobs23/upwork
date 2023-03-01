@@ -1,0 +1,69 @@
+updated script that uses rclone and restic to backup files from a Linux server to Backblaze B2 and Digital Ocean Spaces.
+
+bash:
+
+#!/bin/bash
+
+# Variables
+source_dir="/path/to/source/directory"
+b2_bucket="backblaze-b2-bucket-name"
+b2_key="b2-application-key"
+b2_id="b2-account-id"
+do_bucket="digital-ocean-spaces-bucket-name"
+do_key="digital-ocean-spaces-key"
+do_secret="digital-ocean-spaces-secret"
+restic_password="restic-backup-password"
+restic_repo_b2="b2:$b2_bucket"
+restic_repo_do="s3:https://nyc3.digitaloceanspaces.com/$do_bucket"
+
+# Rclone configuration file
+cat > rclone.conf << EOF
+[$b2_bucket]
+type = b2
+account = $b2_id
+key = $b2_key
+
+[$do_bucket]
+type = s3
+provider = DigitalOcean
+access_key_id = $do_key
+secret_access_key = $do_secret
+endpoint = https://nyc3.digitaloceanspaces.com
+EOF
+
+# Rclone copy command
+rclone copy $source_dir $restic_repo_b2
+rclone copy $source_dir $restic_repo_do
+
+# Restic backup command
+restic -r $restic_repo_b2 backup $source_dir --password $restic_password
+restic -r $restic_repo_do backup $source_dir --password $restic_password
+
+
+
+
+Before running this script, you'll need to replace the following variables with your own information:
+
+source_dir: The path to the directory on your Linux server that you want to backup.
+b2_bucket: The name of the Backblaze B2 bucket that you want to copy the files to.
+b2_key: The application key for your Backblaze B2 account.
+b2_id: The account ID for your Backblaze B2 account.
+do_bucket: The name of the Digital Ocean Spaces bucket that you want to copy the files to.
+do_key: The access key for your Digital Ocean Spaces account.
+do_secret: The secret key for your Digital Ocean Spaces account.
+restic_password: A strong password to encrypt your backups.
+Once you've updated the variables, you can save the script to a file (e.g., backup.sh) and make it executable:
+
+bash:
+chmod +x backup.sh
+Then, you can run the script manually to test it:
+
+bash:
+./backup.sh
+If the script works correctly, you can schedule it as a cron task to run automatically at a specified interval. For example, to run the backup every day at 2am, you can add the following line to your crontab (crontab -e):
+
+javascript:
+0 2 * * * /path/to/backup.sh
+
+
+I hope this helps! Let me know if you have any questions.
