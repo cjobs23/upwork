@@ -1,0 +1,45 @@
+import re
+import csv
+import gzip
+from datetime import datetime
+
+# Define the regular expression pattern to match the desired access.log lines
+pattern = re.compile(r'^(\S+) .+ (POST /apis/_/activity).+"(.*Apple TV.*)".+$')
+
+# Open the access.log and access.log.gz files and read their contents
+with open('access.log', 'r') as f1, gzip.open('access.log.gz', 'rt') as f2:
+    access_log = f1.read() + f2.read()
+
+# Extract the relevant data from the access.log lines and store it in a dictionary
+data = {}
+for line in access_log.split('\n'):
+    match = pattern.match(line)
+    if match:
+        ip_address, endpoint, user_agent = match.groups()
+        timestamp_str = line.split()[3][1:]
+        timestamp = datetime.strptime(timestamp_str, '%d/%b/%Y:%H:%M:%S %z')
+        data[timestamp] = {'ip_address': ip_address, 'endpoint': endpoint, 'user_agent': user_agent}
+
+# Read the user activity CSV file and extract the relevant data
+csv_data = {}
+with open('user_activity.csv', 'r') as f:
+    reader = csv.reader(f)
+    for row in reader:
+        email, uuid, date_str, channel, action, url, timestamp_iso = row
+        timestamp = datetime.fromisoformat(timestamp_iso[:-1])
+        if timestamp in data and 'Apple TV' in data[timestamp]['user_agent']:
+            if email not in csv_data:
+                csv_data[email] = {'timestamp': timestamp, 'count': 1}
+            elif csv_data[email]['timestamp'] != timestamp:
+                csv_data[email]['count'] += 1
+                csv_data[email]['timestamp'] = timestamp
+
+# Calculate the total number of AppleTV users
+total_users = len(csv_data)
+print(f'Total number of AppleTV users: {total_users}')
+#To use this script, save it to a file (e.g. apple_tv_users.py) and make sure you have both the access.
+#log and access.log.gz files in the same directory, as well as the user_activity.csv file. Then, run the script from the command line:
+python apple_tv_users.py
+#The script will read the contents of the access.log and access.log.gz files, extract the relevant data (i.e. lines containing "POST /apis/_/activity" and "Apple TV"), and store it in a dictionary with the timestamp as the key.
+#It will then read the user_activity.csv file, extract the relevant data (i.e. lines with matching timestamps and containing "Apple TV"), and store it in another dictionary with the email address as the key. Finally, it will count the number of unique email addresses in the dictionary and print the result.
+
